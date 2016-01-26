@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>hand</title>
+  </head>
+	<!--	Create the HTML5 'canvas' element in which we will run WebGL
+	-->
+  <body onload="main()">
+    <canvas id="webgl" width="500" height="500">
+    Please use a browser that supports "canvas"
+    </canvas>
+	<p>
+	<div id= CurAngleDisplay></div> 
+	</p>
+	<p> Using arrow key to control the movement of the hand 
+	<br>Use mouse to change specting angle </br>
+	</p>
+	<p>
+		Click Faster/Slower button to control shaking frequency.
+	</p>
+	<p>
+		Click Run/Stop Button to run/stop hand shaking
+	</p>
+		<div id='Mouse'></div>
+	<p>  
+      <button type="button" onclick="spinDown()">Faster << </button>
+	  <button type="button" onclick="runStop()">Run/Stop</button>
+      <button type="button" onclick="spinUp()">Slower >> </button>
+    </p>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-mod.js"></script>
+	<!--	Finally, load in our own JavaScript program file.
+	-->
+    <script src="hand.js"></script>
+  </body>
+</html>
