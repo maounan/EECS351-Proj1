@@ -21,6 +21,7 @@ var FSHADER_SOURCE =
 
 // Global Variables for the spinning tetrahedron:
 var ANGLE_STEP = 45.0;  // default rotation angle rate (deg/sec)
+var floatsPerVertex = 7;
 var r = 0.7;
   var g = 0.7;
   var b = 0.7;
@@ -142,6 +143,8 @@ function main() {
 
 function initVertexBuffer(gl) {
 //==============================================================================
+
+ makeSphere();  
   var colorShapes = new Float32Array([
        
      -3,  0.0, 0.0, 1.0,     r,  0.0,  0.0,  // Node 1
@@ -328,10 +331,17 @@ function initVertexBuffer(gl) {
 
      
   ]);
-  var nn = 126;    // 12 tetrahedron vertices.
+  //console.log(colorShapes.length);
+  for(i = 0; i < sphVerts.length; i++){
+    colorShapes[i + colorShapes.length] = sphVerts[i];
+  }
+
+  console.log(colorShapes.length);
+  var nn = 126 + sphVerts.length / 7;    // 12 tetrahedron vertices.
                   // we can also draw any subset of these we wish,
                   // such as the last 3 vertices.(onscreen at upper right)
-  
+  // console.log(nn);
+  // console.log(sphVerts.length);
   // Create a buffer object
   var shapeBufferHandle = gl.createBuffer();  
   if (!shapeBufferHandle) {
@@ -399,10 +409,21 @@ function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   var dist = Math.sqrt(xMdragTot*xMdragTot + yMdragTot*yMdragTot);
 
+  // modelMatrix.translate(0, 0, 0); 
+  // modelMatrix.scale(1,1,1);  
+  // modelMatrix.rotate(currentAngle, 1, 0, 0);            
+  // gl.drawArrays(gl.TRIANGLES, 126, sphVerts.length / 7);
+
+  modelMatrix.setTranslate(0 , -0.7, 0);            
+  modelMatrix.scale(0.2 * sa,0.2 * sa,0.2 * sa);  
+  modelMatrix.rotate(-30, 1, 0, 0);
+  modelMatrix.rotate(dist*120.0, -yMdragTot+0.0001, xMdragTot+0.0001, 0.0);          
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  gl.drawArrays(gl.TRIANGLES, 126, 36);
+
   modelMatrix.setTranslate(0 + dx, -0.7+dy, 0);            
   modelMatrix.scale(0.2 * sa,0.2 * sa,0.2 * sa);  
   modelMatrix.rotate(-30, 1, 0, 0);
-  //modelMatrix.rotate(currentAngle, 0, 1, 0);  
   modelMatrix.rotate(dist*120.0, -yMdragTot+0.0001, xMdragTot+0.0001, 0.0);          
   gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.drawArrays(gl.TRIANGLES, 0, 36);
@@ -719,4 +740,90 @@ function myKeyPress(ev) {
                         ', shift='    +ev.shiftKey + ', ctrl='    +ev.ctrlKey +
                         ', altKey='   +ev.altKey   +
                         ', metaKey(Command key or Windows key)='+ev.metaKey);
+}
+
+
+function makeSphere() {
+//==============================================================================
+// Make a sphere from one OpenGL TRIANGLE_STRIP primitive.   Make ring-like 
+// equal-lattitude 'slices' of the sphere (bounded by planes of constant z), 
+// and connect them as a 'stepped spiral' design (see makeCylinder) to build the
+// sphere from one triangle strip.
+  var slices = 13;    // # of slices of the sphere along the z axis. >=3 req'd
+                      // (choose odd # or prime# to avoid accidental symmetry)
+  var sliceVerts  = 27; // # of vertices around the top edge of the slice
+                      // (same number of vertices on bottom of slice, too)
+  var topColr = new Float32Array([0.7, 0.7, 0.7]);  // North Pole: light gray
+  var equColr = new Float32Array([0.3, 0.7, 0.3]);  // Equator:    bright green
+  var botColr = new Float32Array([0.9, 0.9, 0.9]);  // South Pole: brightest gray.
+  var sliceAngle = Math.PI/slices;  // lattitude angle spanned by one slice.
+
+  // Create a (global) array to hold this sphere's vertices:
+  sphVerts = new Float32Array(  ((slices * 2* sliceVerts) -2) * floatsPerVertex);
+                    // # of vertices * # of elements needed to store them. 
+                    // each slice requires 2*sliceVerts vertices except 1st and
+                    // last ones, which require only 2*sliceVerts-1.
+                    
+  // Create dome-shaped top slice of sphere at z=+1
+  // s counts slices; v counts vertices; 
+  // j counts array elements (vertices * elements per vertex)
+  var cos0 = 0.0;         // sines,cosines of slice's top, bottom edge.
+  var sin0 = 0.0;
+  var cos1 = 0.0;
+  var sin1 = 0.0; 
+  var j = 0;              // initialize our array index
+  var isLast = 0;
+  var isFirst = 1;
+  for(s1=0; s1<slices; s1++) { // for each slice of the sphere,
+    // find sines & cosines for top and bottom of this slice
+    if(s1==0) {
+      isFirst = 1;  // skip 1st vertex of 1st slice.
+      cos0 = 1.0;   // initialize: start at north pole.
+      sin0 = 0.0;
+    }
+    else {          // otherwise, new top edge == old bottom edge
+      isFirst = 0;  
+      cos0 = cos1;
+      sin0 = sin1;
+    }               // & compute sine,cosine for new bottom edge.
+    cos1 = Math.cos((s1+1)*sliceAngle);
+    sin1 = Math.sin((s1+1)*sliceAngle);
+    // go around the entire slice, generating TRIANGLE_STRIP verts
+    // (Note we don't initialize j; grows with each new attrib,vertex, and slice)
+    if(s1==slices-1) isLast=1; // skip last vertex of last slice.
+    for(v=isFirst; v< 2*sliceVerts-isLast; v++, j+=floatsPerVertex) { 
+      if(v%2==0)
+      {       // put even# vertices at the the slice's top edge
+              // (why PI and not 2*PI? because 0 <= v < 2*sliceVerts
+              // and thus we can simplify cos(2*PI(v/2*sliceVerts))  
+        sphVerts[j  ] = sin0 * Math.cos(Math.PI*(v)/sliceVerts);  
+        sphVerts[j+1] = sin0 * Math.sin(Math.PI*(v)/sliceVerts);  
+        sphVerts[j+2] = cos0;   
+        sphVerts[j+3] = 1.0;      
+      }
+      else {  // put odd# vertices around the slice's lower edge;
+              // x,y,z,w == cos(theta),sin(theta), 1.0, 1.0
+              //          theta = 2*PI*((v-1)/2)/capVerts = PI*(v-1)/capVerts
+        sphVerts[j  ] = sin1 * Math.cos(Math.PI*(v-1)/sliceVerts);    // x
+        sphVerts[j+1] = sin1 * Math.sin(Math.PI*(v-1)/sliceVerts);    // y
+        sphVerts[j+2] = cos1;                                       // z
+        sphVerts[j+3] = 1.0;                                        // w.   
+      }
+      if(s1==0) {  // finally, set some interesting colors for vertices:
+        sphVerts[j+4]=topColr[0]; 
+        sphVerts[j+5]=topColr[1]; 
+        sphVerts[j+6]=topColr[2]; 
+        }
+      else if(s1==slices-1) {
+        sphVerts[j+4]=botColr[0]; 
+        sphVerts[j+5]=botColr[1]; 
+        sphVerts[j+6]=botColr[2]; 
+      }
+      else {
+          sphVerts[j+4]=Math.random();// equColr[0]; 
+          sphVerts[j+5]=Math.random();// equColr[1]; 
+          sphVerts[j+6]=Math.random();// equColr[2];          
+      }
+    }
+  }
 }
