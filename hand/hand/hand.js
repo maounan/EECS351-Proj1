@@ -145,7 +145,8 @@ function initVertexBuffer(gl) {
 //==============================================================================
 
  makeSphere();  
-  var colorShapes = new Float32Array([
+  var colorShapes = new Float32Array(20000);
+    var name=[
        
      -3,  0.0, 0.0, 1.0,     r,  0.0,  0.0,  // Node 1
       0,  0.0, 2.0, 1.0,     0.0,  g,  0.0,  // Node 2
@@ -330,10 +331,13 @@ function initVertexBuffer(gl) {
 
 
      
-  ]);
+  ];
+
+  colorShapes.set(name, 0);
+  var size1 = colorShapes.length;
   //console.log(colorShapes.length);
   for(i = 0; i < sphVerts.length; i++){
-    colorShapes[i + colorShapes.length] = sphVerts[i];
+    colorShapes[i + 126 * 7] = sphVerts[i];
   }
 
   console.log(colorShapes.length);
@@ -409,17 +413,14 @@ function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   var dist = Math.sqrt(xMdragTot*xMdragTot + yMdragTot*yMdragTot);
 
-  // modelMatrix.translate(0, 0, 0); 
-  // modelMatrix.scale(1,1,1);  
-  // modelMatrix.rotate(currentAngle, 1, 0, 0);            
-  // gl.drawArrays(gl.TRIANGLES, 126, sphVerts.length / 7);
+  
 
-  modelMatrix.setTranslate(0 , -0.7, 0);            
-  modelMatrix.scale(0.2 * sa,0.2 * sa,0.2 * sa);  
-  modelMatrix.rotate(-30, 1, 0, 0);
-  modelMatrix.rotate(dist*120.0, -yMdragTot+0.0001, xMdragTot+0.0001, 0.0);          
-  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-  gl.drawArrays(gl.TRIANGLES, 126, 36);
+
+  modelMatrix.setTranslate(0.5, 0.5, 0); 
+  modelMatrix.scale(0.2, 0.2, 0.2);  
+  modelMatrix.rotate(currentAngle, 1, 0, 0);       
+  gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);   
+  gl.drawArrays(gl.TRIANGLES, 126, sphVerts.length / 7);
 
   modelMatrix.setTranslate(0 + dx, -0.7+dy, 0);            
   modelMatrix.scale(0.2 * sa,0.2 * sa,0.2 * sa);  
