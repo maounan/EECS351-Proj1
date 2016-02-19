@@ -5,12 +5,13 @@
     <title>7.07b.JT.LookAtSceneWithKeys_4ViewVolume</title>
   </head>
 
-  <body onload="main()">
+  <body onload="main()" onresize="resize()" style="margin:0px;padding:0px;width:100%;height:100%;">
     <canvas id="webgl" width="600" height="600">
     Please use a browser that supports "canvas"
     </canvas>
-    <h1>Hello!</h1>
-    <p>Press Left/Right Arrow to change camera</p>
+    <h1>Hello! This is 3D space world with light effect</h1>
+    <p>Press Left/Right/Up/Down Arrow to move camera</p>
+    <p>Press a/d/w/s to rotate camera</p>
     <p>Press Space to stop/run animation</p>
     <script src="../lib/webgl-utils.js"></script>
     <script src="../lib/webgl-debug.js"></script>
